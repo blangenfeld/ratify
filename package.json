@@ -1,0 +1,23 @@
+{
+  "name": "ratify",
+  "version": "0.0.1",
+  "description": "Promise-based validation library",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --reporter spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blangenfeld/ratify.git"
+  },
+  "keywords": [
+    "javascript",
+    "validation"
+  ],
+  "author": "Brian Langenfeld <brian@knotfield.com> (knotfield.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/blangenfeld/ratify/issues"
+  },
+  "homepage": "https://github.com/blangenfeld/ratify#readme"
+}
