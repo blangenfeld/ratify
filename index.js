@@ -359,6 +359,7 @@ var builtInValidators = {
   numericality: function(options) {
     options = options || {};
 
+    // eslint-disable-next-line complexity
     return function(attrs, attrName) {
       var value = _.deepGet(attrs, attrName);
 
