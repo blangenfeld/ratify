@@ -65,7 +65,9 @@ function settleAll(promises) {
       return rejections + inspection.isRejected() ? 1 : 0;
     }, 0)
     .then(function(rejections) {
-      return rejections ? Promise.reject(new ValidationError()) : Promise.resolve();
+      if(rejections > 0) {
+        throw new ValidationError();
+      }
     });
 }
 
@@ -246,7 +248,7 @@ var builtInValidators = {
     return function(attrs, attrName) {
       var value = _.deepGet(attrs, attrName);
       var set = [].concat(options.in || []);
-      
+
       return rejectUnless(!_.contains(set, value));
     };
   },
