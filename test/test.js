@@ -18,6 +18,20 @@ function toString(value) {
   return '' + value;
 }
 
+describe('Underscore mixins', function() {
+  describe('#deepGet', function() {
+    var deepGet = _.deepGet;
+
+    it('returns a value if the path is valid', function() {
+      expect(deepGet({a: {b: {c: 42}}}, 'a.b.c')).to.equal(42);
+    });
+
+    it('returns undefined if the path is invalid', function() {
+      expect(deepGet({}, 'foo')).to.be.undefined;
+    });
+  });
+});
+
 describe('Ratify', function() {
   describe('single validator', function() {
     var validator = Ratify.getValidator('presence', true);
@@ -26,7 +40,7 @@ describe('Ratify', function() {
       expect(validator).to.be.a('function');
     });
 
-    it('returns a resolving promise upon success', function() {
+    it('resolves upon success', function() {
       return expect(validator({a: 1}, 'a')).to.eventually.be.resolved;
     });
 
@@ -48,7 +62,7 @@ describe('Ratify', function() {
       expect(validator).to.be.a('function');
     });
 
-    it('returns a resolving promise upon success', function() {
+    it('resolves upon success', function() {
       return expect(validator({a: 1}, 'a')).to.eventually.be.resolved;
     });
 
@@ -71,7 +85,7 @@ describe('Ratify', function() {
       expect(validator).to.be.a('function');
     });
 
-    it('returns a resolving promise upon success', function() {
+    it('resolves upon success', function() {
       return expect(validator({username: 'foo', password: 'asdf123', email: 'foo@bar.com'})).to.eventually.be.resolved;
     });
 
@@ -84,316 +98,526 @@ describe('Ratify', function() {
 
   describe('built in validation methods', function() {
     describe('#absence', function() {
-      var absence = Ratify.validators.absence;
+      context('(true)', function() {
+        var validate = Ratify.validators.absence(true);
 
-      it('returns a rejecting promise when passed ({a: "foo"}, "a", true)', function() {
-        return expect(absence({a: 'foo'}, 'a', true)).to.eventually.be.rejected;
+        it('rejects when passed ({a: "foo"}, "a")', function() {
+          return expect(validate({a: 'foo'}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('resolves when passed ({}, "a")', function() {
+          return expect(validate({}, 'a')).to.eventually.be.resolved;
+        });
+
+        _.each([null, undefined, '', ' '], function(value) {
+          it('resolves when passed ({a: ' + toString(value) + '}, "a")', function() {
+            return expect(validate({a: value}, 'a')).to.eventually.be.resolves;
+          });
+        });
       });
 
-      it('returns a resolving promise when passed ({a: "foo"}, "a", false)', function() {
-        return expect(absence({a: 'foo'}, 'a', false)).to.eventually.be.resolved;
-      });
+      context('(false)', function() {
+        var validate = Ratify.validators.absence(false);
 
-      it('returns a resolving promise when passed ({}, "a", false)', function() {
-        return expect(absence({}, 'a', false)).to.eventually.be.resolved;
-      });
+        it('resolves when passed ({a: "foo"}, "a")', function() {
+          return expect(validate({a: 'foo'}, 'a')).to.eventually.be.resolved;
+        });
 
-      it('returns a resolving promise when passed ({}, "a", true)', function() {
-        return expect(absence({}, 'a', true)).to.eventually.be.resolved;
-      });
+        it('resolves when passed ({}, "a")', function() {
+          return expect(validate({}, 'a')).to.eventually.be.resolved;
+        });
 
-      it('returns a resolving promise when passed ({a: null}, "a", true)', function() {
-        return expect(absence({a: null}, 'a', true)).to.eventually.be.resolved;
-      });
-
-      it('returns a resolving promise when passed ({a: undefined}, "a", true)', function() {
-        return expect(absence({a: undefined}, 'a', true)).to.eventually.be.resolved;
-      });
-
-      it('returns a resolving promise when passed ({a: ""}, "a", true)', function() {
-        return expect(absence({a: ''}, 'a', true)).to.eventually.be.resolved;
-      });
-
-      it('returns a resolving promise when passed ({a: " "}, "a", true)', function() {
-        return expect(absence({a: ' '}, 'a', true)).to.eventually.be.resolved;
+        _.each([null, undefined, '', ' '], function(value) {
+          it('resolves when passed ({a: ' + toString(value) + '}, "a")', function() {
+            return expect(validate({a: value}, 'a')).to.eventually.be.resolved;
+          });
+        });
       });
     });
 
     describe('#acceptance', function() {
-      var acceptance = Ratify.validators.acceptance;
-      [true, 'true', 1, '1'].forEach(function(value) {
-        it('returns a resolving promise when passed ({a: ' + toString(value) + '}, "a")', function() {
-          return expect(acceptance({a: value}, 'a')).to.eventually.be.resolved;
-        });
-      });
-      [false, 'false', 0, -0, '', ' ', null, undefined, NaN].forEach(function(value) {
-        it('returns a rejecting promise when passed ({a: ' + toString(value) + '}, "a")', function() {
-          return expect(acceptance({a: value}, 'a')).to.eventually.be.rejected;
-        });
-      });
-    });
+      context('()', function() {
+        var validate = Ratify.validators.acceptance();
 
-    describe('#between', function() {
-      var between = Ratify.validators.between;
-      it('proxies #numericality with options {greaterThanOrEqualTo: x, lessThanOrEqualTo: y}', function() {
-        var numericality = sinon.stub(Ratify.validators, 'numericality').returns('foo');
-        between({a: 1}, 'a', [1, 10]);
-        sinon.restore(Ratify.validators, 'numericality');
-        return expect(numericality.calledWithExactly({a: 1}, 'a', {greaterThanOrEqualTo: 1, lessThanOrEqualTo: 10})).to.be.true;
+        [true, 'true', 1, '1'].forEach(function(value) {
+          it('resolves when passed ({a: ' + toString(value) + '}, "a")', function() {
+            return expect(validate({a: value}, 'a')).to.eventually.be.resolved;
+          });
+        });
+
+        [false, 'false', 0, -0, '', ' ', null, undefined, NaN].forEach(function(value) {
+          it('rejects when passed ({a: ' + toString(value) + '}, "a")', function() {
+            return expect(validate({a: value}, 'a')).to.eventually.be.rejected;
+          });
+        });
       });
     });
 
     describe('#confirmation', function() {
-      var confirmation = Ratify.validators.confirmation;
+      context("('password')", function() {
+        var validate = Ratify.validators.confirmation('password');
 
-      it('returns a resolving promise when passed ({a: "foo", b: "foo"}, "b", "a")', function() {
-        return expect(confirmation({a: "foo", b: "foo"}, 'b', 'a')).to.eventually.be.resolved;
-      });
+        it('resolves when passed ({password: "foo", again: "foo"}, "again")', function() {
+          return expect(validate({password: "foo", again: "foo"}, 'again')).to.eventually.be.resolved;
+        });
 
-
-      it('returns a rejecting promise when passed ({a: "foo", b: "bar"}, "b", "a")', function() {
-        return expect(confirmation({a: "foo", b: "bar"}, 'b', 'a')).to.eventually.be.rejected;
+        it('rejects when passed ({password: "foo", again: "bar"}, "again")', function() {
+          return expect(validate({password: "foo", again: "bar"}, 'again')).to.eventually.be.rejected;
+        });
       });
     });
 
     describe('#exclusion', function() {
-      var exclusion = Ratify.validators.exclusion;
+      context('([1,2,3])', function() {
+        var validate = Ratify.validators.exclusion([1,2,3]);
 
-      it('returns a rejecting promise when passed ({a: 1}, "a", {in: [1,2,3]})', function() {
-        return expect(exclusion({a: 1}, 'a', {in: [1,2,3]})).to.eventually.be.rejected;
+        it('rejects when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 1}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('resolves when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 4}, 'a')).to.eventually.be.resolved;
+        });
       });
 
-      it('returns a resolving promise when passed ({a: 1}, "a", {in: [4,5,6]})', function() {
-        return expect(exclusion({a: 1}, 'a', {in: [4,5,6]})).to.eventually.be.resolved;
+      context('({in: [1,2,3]})', function() {
+        var validate = Ratify.validators.exclusion({in: [1,2,3]});
+
+        it('rejects when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 1}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('resolves when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 4}, 'a')).to.eventually.be.resolved;
+        });
       });
     });
 
     describe('#format', function() {
-      var format = Ratify.validators.format;
+      context('(/bar/)', function() {
+        var validate = Ratify.validators.format({with: /bar/});
 
-      it('returns a resolving promise when passed ({a: "foobarbaz"}, "a", {with: /bar/})', function() {
-        return expect(format({a: 'foobarbaz'}, 'a', {with: /bar/})).to.eventually.be.resolved;
+        it('resolves when passed ({a: "foobarbaz"}, "a")', function() {
+          return expect(validate({a: 'foobarbaz'}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: "quxquxqux"}, "a")', function() {
+          return expect(validate({a: 'quxquxqux'}, 'a')).to.eventually.be.rejected;
+        });
       });
 
-      it('returns a resolving promise when passed ({a: "foobarbaz"}, "a", {without: /qux/})', function() {
-        return expect(format({a: 'foobarbaz'}, 'a', {without: /qux/})).to.eventually.be.resolved;
+      context('({with: /bar/})', function() {
+        var validate = Ratify.validators.format({with: /bar/});
+
+        it('resolves when passed ({a: "foobarbaz"}, "a")', function() {
+          return expect(validate({a: 'foobarbaz'}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: "quxquxqux"}, "a")', function() {
+          return expect(validate({a: 'quxquxqux'}, 'a')).to.eventually.be.rejected;
+        });
       });
 
-      it('returns a resolving promise when passed ({a: "foobarbaz"}, "a", {with: /bar/, without: /qux/})', function() {
-        return expect(format({a: 'foobarbaz'}, 'a', {with: /bar/, without: /qux/})).to.eventually.be.resolved;
+      context('({without: /qux/})', function() {
+        var validate = Ratify.validators.format({without: /qux/});
+
+        it('resolves when passed ({a: "foobarbaz"}, "a")', function() {
+          return expect(validate({a: 'foobarbaz'}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: "quxquxqux"}, "a")', function() {
+          return expect(validate({a: 'quxquxqux'}, 'a')).to.eventually.be.rejected;
+        });
       });
 
-      it('returns a rejecting promise when passed ({a: "foobarbaz"}, "a", {with: /qux/})', function() {
-        return expect(format({a: 'foobarbaz'}, 'a', {with: /qux/})).to.eventually.be.rejected;
-      });
+      context('({with: /bar/, without: /qux/})', function() {
+        var validate = Ratify.validators.format({with: /bar/, without: /qux/});
 
-      it('returns a rejecting promise when passed ({a: "foobarbaz"}, "a", {without: /bar/})', function() {
-        return expect(format({a: 'foobarbaz'}, 'a', {without: /bar/})).to.eventually.be.rejected;
-      });
+        it('resolves when passed ({a: "foobarbaz"}, "a")', function() {
+          return expect(validate({a: 'foobarbaz'}, 'a')).to.eventually.be.resolved;
+        });
 
-      it('returns a rejecting promise when passed ({a: "foobarbaz"}, "a", {with: /bar/, without: /bar/})', function() {
-        return expect(format({a: 'foobarbaz'}, 'a', {with: /bar/, without: /bar/})).to.eventually.be.rejected;
+        it('rejects when passed ({a: "quxquxqux"}, "a")', function() {
+          return expect(validate({a: 'quxquxqux'}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('rejects when passed ({a: "barquxbar"}, "a")', function() {
+          return expect(validate({a: 'barquxbar'}, 'a')).to.eventually.be.rejected;
+        });
       });
     });
 
     describe('#inclusion', function() {
-      var inclusion = Ratify.validators.inclusion;
+      context('([1,2,3])', function() {
+        var validate = Ratify.validators.inclusion([1,2,3]);
 
-      it('returns a resolving promise when passed ({a: 1}, "a", {in: [1,2,3]})', function() {
-        return expect(inclusion({a: 1}, 'a', {in: [1,2,3]})).to.eventually.be.resolved;
+        it('resolves when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 1}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 4}, 'a')).to.eventually.be.rejected;
+        });
       });
 
-      it('returns a rejecting promise when passed ({a: 1}, "a", {in: [4,5,6]})', function() {
-        return expect(inclusion({a: 1}, 'a', {in: [4,5,6]})).to.eventually.be.rejected;
+      context('({in: [1,2,3]})', function() {
+        var validate = Ratify.validators.inclusion({in: [1,2,3]});
+
+        it('resolves when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 1}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 4}, 'a')).to.eventually.be.rejected;
+        });
       });
     });
 
     describe('#length', function() {
-      var length = Ratify.validators.length;
+      context('(3)', function() {
+        var validate = Ratify.validators.length(3);
 
-      it('returns a resolving promise when passed ({a: "foo"}, "a", 3)', function() {
-        return expect(length({a: 'foo'}, 'a', 3)).to.eventually.be.resolved;
+        it('rejects when passed ({a: "22"}, "a")', function() {
+          return expect(validate({a: '22'}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('resolves when passed ({a: "333"}, "a")', function() {
+          return expect(validate({a: '333'}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: "4444"}, "a")', function() {
+          return expect(validate({a: '4444'}, 'a')).to.eventually.be.rejected;
+        });
       });
 
-      it('returns a rejecting promise when passed ({a: "foo"}, "a", 4)', function() {
-        return expect(length({a: 'foo'}, 'a', 4)).to.eventually.be.rejected;
+      context('([3,4])', function() {
+        var validate = Ratify.validators.length([3,4]);
+
+        it('rejects when passed ({a: "22"}, "a")', function() {
+          return expect(validate({a: '22'}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('resolves when passed ({a: "333"}, "a")', function() {
+          return expect(validate({a: '333'}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('resolves when passed ({a: "4444"}, "a")', function() {
+          return expect(validate({a: '4444'}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: "55555"}, "a")', function() {
+          return expect(validate({a: '55555'}, 'a')).to.eventually.be.rejected;
+        });
       });
 
-      it('returns a resolving promise when passed ({a: "foo"}, "a", {range: [3,4]})', function() {
-        return expect(length({a: 'foo'}, 'a', {range: [3,4]})).to.eventually.be.resolved;
+      context('({range: [3,4]})', function() {
+        var validate = Ratify.validators.length({range: [3,4]});
+
+        it('rejects when passed ({a: "22"}, "a")', function() {
+          return expect(validate({a: '22'}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('resolves when passed ({a: "333"}, "a")', function() {
+          return expect(validate({a: '333'}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('resolves when passed ({a: "4444"}, "a")', function() {
+          return expect(validate({a: '4444'}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: "55555"}, "a")', function() {
+          return expect(validate({a: '55555'}, 'a')).to.eventually.be.rejected;
+        });
       });
 
-      it('returns a rejecting promise when passed ({a: "foo"}, "a", {range: [1,2]})', function() {
-        return expect(length({a: 'foo'}, 'a', {range: [1,2]})).to.eventually.be.rejected;
+      context('({minimum: 3})', function() {
+        var validate = Ratify.validators.length({minimum: 3});
+
+        it('rejects when passed ({a: "22"}, "a")', function() {
+          return expect(validate({a: '22'}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('resolves when passed ({a: "333"}, "a")', function() {
+          return expect(validate({a: '333'}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('resolves when passed ({a: "4444"}, "a")', function() {
+          return expect(validate({a: '4444'}, 'a')).to.eventually.be.resolved;
+        });
       });
 
-      it('returns a resolving promise when passed ({a: "foo"}, "a", {minimum: 3})', function() {
-        return expect(length({a: 'foo'}, 'a', {minimum: 3})).to.eventually.be.resolved;
+      context('({maximum: 3})', function() {
+        var validate = Ratify.validators.length({maximum: 3});
+
+        it('resolves when passed ({a: "22"}, "a")', function() {
+          return expect(validate({a: '22'}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('resolves when passed ({a: "333"}, "a")', function() {
+          return expect(validate({a: '333'}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: "4444"}, "a")', function() {
+          return expect(validate({a: '4444'}, 'a')).to.eventually.be.rejected;
+        });
       });
 
-      it('returns a rejecting promise when passed ({a: "foo"}, "a", {minimum: 4})', function() {
-        return expect(length({a: 'foo'}, 'a', {minimum: 4})).to.eventually.be.rejected;
-      });
+      context('({is: 3})', function() {
+        var validate = Ratify.validators.length({is: 3});
 
-      it('returns a resolving promise when passed ({a: "foo"}, "a", {maximum: 3})', function() {
-        return expect(length({a: 'foo'}, 'a', {maximum: 3})).to.eventually.be.resolved;
-      });
+        it('rejects when passed ({a: "22"}, "a")', function() {
+          return expect(validate({a: '22'}, 'a')).to.eventually.be.rejected;
+        });
 
-      it('returns a rejecting promise when passed ({a: "foo"}, "a", {maximum: 2})', function() {
-        return expect(length({a: 'foo'}, 'a', {maximum: 2})).to.eventually.be.rejected;
-      });
+        it('resolves when passed ({a: "333"}, "a")', function() {
+          return expect(validate({a: '333'}, 'a')).to.eventually.be.resolved;
+        });
 
-      it('returns a resolving promise when passed ({a: "foo"}, "a", {is: 3})', function() {
-        return expect(length({a: 'foo'}, 'a', {is: 3})).to.eventually.be.resolved;
-      });
-
-      it('returns a rejecting promise when passed ({a: "foo"}, "a", {is: 2})', function() {
-        return expect(length({a: 'foo'}, 'a', {is: 4})).to.eventually.be.rejected;
-      });
-    });
-
-    describe('#max', function() {
-      var max = Ratify.validators.max;
-      it('proxies #numericality with options {lessThanOrEqualTo: n}', function() {
-        var numericality = sinon.stub(Ratify.validators, 'numericality').returns('foo');
-        max({a: 1}, 'a', 42);
-        sinon.restore(Ratify.validators, 'numericality');
-        return expect(numericality.calledWithExactly({a: 1}, 'a', {lessThanOrEqualTo: 42})).to.be.true;
-      });
-    });
-
-    describe('#maxLength', function() {
-      var maxLength = Ratify.validators.maxLength;
-      it('proxies #length with options {maximum: n}', function() {
-        var length = sinon.stub(Ratify.validators, 'length').returns('foo');
-        maxLength({a: 1}, 'a', 42);
-        sinon.restore(Ratify.validators, 'length');
-        return expect(length.calledWithExactly({a: 1}, 'a', {maximum: 42})).to.be.true;
-      });
-    });
-
-    describe('#min', function() {
-      var min = Ratify.validators.min;
-
-      it('proxies #numericality with options {greaterThanOrEqualTo: n}', function() {
-        var numericality = sinon.stub(Ratify.validators, 'numericality').returns('foo');
-        min({a: 1}, 'a', 42);
-        sinon.restore(Ratify.validators, 'numericality');
-        return expect(numericality.calledWithExactly({a: 1}, 'a', {greaterThanOrEqualTo: 42})).to.be.true;
-      });
-    });
-
-    describe('#minLength', function() {
-      var minLength = Ratify.validators.minLength;
-      it('proxies #length with options {minimum: n}', function() {
-        var length = sinon.stub(Ratify.validators, 'length').returns('foo');
-        minLength({a: 1}, 'a', 42);
-        sinon.restore(Ratify.validators, 'length');
-        return expect(length.calledWithExactly({a: 1}, 'a', {minimum: 42})).to.be.true;
+        it('rejects when passed ({a: "4444"}, "a")', function() {
+          return expect(validate({a: '4444'}, 'a')).to.eventually.be.rejected;
+        });
       });
     });
 
     describe('#numericality', function() {
-      var numericality = Ratify.validators.numericality;
+      context('()', function() {
+        var validate = Ratify.validators.numericality();
 
-      it('returns a resolving promise when passed ({a: 1}, "a")', function() {
-        return expect(numericality({a: 1}, 'a')).to.eventually.be.resolved;
+        it('resolves when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 1}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('resolves when passed ({a: 123.45}, "a")', function() {
+          return expect(validate({a: 123.45}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('resolves when passed ({a: "1"}, "a")', function() {
+          return expect(validate({a: "1"}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('resolves when passed ({a: "123.45"}, "a")', function() {
+          return expect(validate({a: "123.45"}, 'a')).to.eventually.be.resolved;
+        });
       });
 
-      it('returns a resolving promise when passed ({a: 123.45}, "a")', function() {
-        return expect(numericality({a: 123.45}, 'a')).to.eventually.be.resolved;
+      context('({onlyInteger: true})', function() {
+        var validate = Ratify.validators.numericality({onlyInteger: true});
+
+        it('resolves when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 1}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('resolves when passed ({a: "1"}, "a")', function() {
+          return expect(validate({a: "1"}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: 123.45}, "a")', function() {
+          return expect(validate({a: 123.45}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('rejects when passed ({a: "123.45"}, "a")', function() {
+          return expect(validate({a: "123.45"}, 'a')).to.eventually.be.rejected;
+        });
       });
 
-      it('returns a resolving promise when passed ({a: "1"}, "a")', function() {
-        return expect(numericality({a: "1"}, 'a')).to.eventually.be.resolved;
+      context('({even: true})', function() {
+        var validate = Ratify.validators.numericality({even: true});
+
+        it('resolves when passed ({a: 2}, "a")', function() {
+          return expect(validate({a: 2}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('resolves when passed ({a: "2"}, "a")', function() {
+          return expect(validate({a: "2"}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 1}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('rejects when passed ({a: "1"}, "a")', function() {
+          return expect(validate({a: "1"}, 'a')).to.eventually.be.rejected;
+        });
       });
 
-      it('returns a resolving promise when passed ({a: "123.45"}, "a")', function() {
-        return expect(numericality({a: "123.45"}, 'a')).to.eventually.be.resolved;
-      });
+      context('({odd: true})', function() {
+        var validate = Ratify.validators.numericality({odd: true});
 
-      it('returns a resolving promise when passed ({a: 1}, "a", {onlyInteger: true})', function() {
-        return expect(numericality({a: 1}, 'a', {onlyInteger: true})).to.eventually.be.resolved;
-      });
+        it('resolves when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 1}, 'a')).to.eventually.be.resolved;
+        });
 
-      it('returns a resolving promise when passed ({a: "1"}, "a", {onlyInteger: true})', function() {
-        return expect(numericality({a: "1"}, 'a', {onlyInteger: true})).to.eventually.be.resolved;
-      });
+        it('resolves when passed ({a: "1"}, "a")', function() {
+          return expect(validate({a: "1"}, 'a')).to.eventually.be.resolved;
+        });
 
-      it('returns a rejecting promise when passed ({a: 123.45}, "a", {onlyInteger: true})', function() {
-        return expect(numericality({a: 123.45}, 'a', {onlyInteger: true})).to.eventually.be.rejected;
-      });
+        it('rejects when passed ({a: 2}, "a")', function() {
+          return expect(validate({a: 2}, 'a')).to.eventually.be.rejected;
+        });
 
-      it('returns a rejecting promise when passed ({a: "123.45"}, "a", {onlyInteger: true})', function() {
-        return expect(numericality({a: "123.45"}, 'a', {onlyInteger: true})).to.eventually.be.rejected;
-      });
-
-      it('returns a resolving promise when passed ({a: 2}, "a", {even: true})', function() {
-        return expect(numericality({a: 2}, 'a', {even: true})).to.eventually.be.resolved;
-      });
-
-      it('returns a resolving promise when passed ({a: "2"}, "a", {even: true})', function() {
-        return expect(numericality({a: "2"}, 'a', {even: true})).to.eventually.be.resolved;
-      });
-
-      it('returns a rejecting promise when passed ({a: 1}, "a", {even: true})', function() {
-        return expect(numericality({a: 1}, 'a', {even: true})).to.eventually.be.rejected;
-      });
-
-      it('returns a rejecting promise when passed ({a: "1"}, "a", {even: true})', function() {
-        return expect(numericality({a: "1"}, 'a', {even: true})).to.eventually.be.rejected;
-      });
-
-      it('returns a resolving promise when passed ({a: 1}, "a", {odd: true})', function() {
-        return expect(numericality({a: 1}, 'a', {odd: true})).to.eventually.be.resolved;
-      });
-
-      it('returns a resolving promise when passed ({a: "1"}, "a", {odd: true})', function() {
-        return expect(numericality({a: "1"}, 'a', {odd: true})).to.eventually.be.resolved;
-      });
-
-      it('returns a rejecting promise when passed ({a: 2}, "a", {odd: true})', function() {
-        return expect(numericality({a: 2}, 'a', {odd: true})).to.eventually.be.rejected;
-      });
-
-      it('returns a rejecting promise when passed ({a: "2"}, "a", {odd: true})', function() {
-        return expect(numericality({a: "2"}, 'a', {odd: true})).to.eventually.be.rejected;
+        it('rejects when passed ({a: "2"}, "a")', function() {
+          return expect(validate({a: "2"}, 'a')).to.eventually.be.rejected;
+        });
       });
     });
 
     describe('#presence', function() {
-      var presence = Ratify.validators.presence;
+      context('(true)', function() {
+        var validate = Ratify.validators.presence(true);
 
-      it('returns a resolving promise when passed ({a: "foo"}, "a", true)', function() {
-        return expect(presence({a: 'foo'}, 'a', true)).to.eventually.be.resolved;
+        it('resolves when passed ({a: "foo"}, "a")', function() {
+          return expect(validate({a: 'foo'}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({}, "a")', function() {
+          return expect(validate({}, 'a')).to.eventually.be.rejected;
+        });
+
+        _.each([null, undefined, '', ' '], function(value) {
+          it('rejects when passed ({a: ' + toString(value) + '}, "a")', function() {
+            return expect(validate({a: value}, 'a')).to.eventually.be.rejected;
+          });
+        });
       });
 
-      it('returns a resolving promise when passed ({a: "foo"}, "a", false)', function() {
-        return expect(presence({a: 'foo'}, 'a', false)).to.eventually.be.resolved;
-      });
+      context('(false)', function() {
+        var validate = Ratify.validators.presence(false);
 
-      it('returns a resolving promise when passed ({}, "a", false)', function() {
-        return expect(presence({}, 'a', false)).to.eventually.be.resolved;
-      });
+        it('resolves when passed ({a: "foo"}, "a")', function() {
+          return expect(validate({a: 'foo'}, 'a')).to.eventually.be.resolved;
+        });
 
-      it('returns a rejecting promise when passed ({}, "a", true)', function() {
-        return expect(presence({}, 'a', true)).to.eventually.be.rejected;
-      });
+        it('resolves when passed ({}, "a")', function() {
+          return expect(validate({}, 'a')).to.eventually.be.resolved;
+        });
 
-      it('returns a rejecting promise when passed ({a: null}, "a", true)', function() {
-        return expect(presence({a: null}, 'a', true)).to.eventually.be.rejected;
+        _.each([null, undefined, '', ' '], function(value) {
+          it('resolves when passed ({a: ' + toString(value) + '}, "a")', function() {
+            return expect(validate({a: value}, 'a')).to.eventually.be.resolved;
+          });
+        });
       });
+    });
+  });
 
-      it('returns a rejecting promise when passed ({a: undefined}, "a", true)', function() {
-        return expect(presence({a: undefined}, 'a', true)).to.eventually.be.rejected;
+  describe('Backbone.Validation methods', function() {
+    describe('#equalTo', function() {
+      context("('password')", function() {
+        it("proxies #confirmation with argument 'password'", function() {
+          var confirmation = sinon.stub(Ratify.validators, 'confirmation').returns('foo');
+          result = Ratify.validators.equalTo('password');
+          sinon.restore(Ratify.validators, 'confirmation');
+          expect(result).to.equal('foo');
+          return expect(confirmation.calledWithExactly('password')).to.be.true;
+        });
       });
+    });
 
-      it('returns a rejecting promise when passed ({a: ""}, "a", true)', function() {
-        return expect(presence({a: ''}, 'a', true)).to.eventually.be.rejected;
+    describe('#max', function() {
+      context('(42)', function() {
+        it('proxies #numericality with options {lessThanOrEqualTo: 42}', function() {
+          var numericality = sinon.stub(Ratify.validators, 'numericality').returns('foo');
+          result = Ratify.validators.max(42);
+          sinon.restore(Ratify.validators, 'numericality');
+          expect(result).to.equal('foo');
+          return expect(numericality.calledWithExactly({lessThanOrEqualTo: 42})).to.be.true;
+        });
       });
+    });
 
-      it('returns a rejecting promise when passed ({a: " "}, "a", true)', function() {
-        return expect(presence({a: ' '}, 'a', true)).to.eventually.be.rejected;
+    describe('#maxLength', function() {
+      context('(42)', function() {
+        it('proxies #length with options {maximum: 42}', function() {
+          var length = sinon.stub(Ratify.validators, 'length').returns('foo');
+          var result = Ratify.validators.maxLength(42);
+          sinon.restore(Ratify.validators, 'length');
+          expect(result).to.equal('foo');
+          return expect(length.calledWithExactly({maximum: 42})).to.be.true;
+        });
+      });
+    });
+
+    describe('#minLength', function() {
+      context('(42)', function() {
+        it('proxies #length with options {minimum: 42}', function() {
+          var length = sinon.stub(Ratify.validators, 'length').returns('foo');
+          var result = Ratify.validators.minLength(42);
+          sinon.restore(Ratify.validators, 'length');
+          expect(result).to.equal('foo');
+          return expect(length.calledWithExactly({minimum: 42})).to.be.true;
+        });
+      });
+    });
+
+    describe('#min', function() {
+      context('(42)', function() {
+        it('proxies #numericality with options {greaterThanOrEqualTo: 42}', function() {
+          var numericality = sinon.stub(Ratify.validators, 'numericality').returns('foo');
+          var result = Ratify.validators.min(42);
+          sinon.restore(Ratify.validators, 'numericality');
+          expect(result).to.equal('foo');
+          return expect(numericality.calledWithExactly({greaterThanOrEqualTo: 42})).to.be.true;
+        });
+      });
+    });
+
+    describe('#oneOf', function() {
+      context('([1, 2, 3])', function() {
+        it('proxies #inclusion with options {in: [1, 2, 3]}', function() {
+          var inclusion = sinon.stub(Ratify.validators, 'inclusion').returns('foo');
+          var result = Ratify.validators.oneOf([1, 2, 3]);
+          sinon.restore(Ratify.validators, 'inclusion');
+          expect(result).to.equal('foo');
+          return expect(inclusion.calledWithExactly({in: [1, 2, 3]})).to.be.true;
+        });
+      });
+    });
+
+    describe('#pattern', function() {
+      context('(/foo/)', function() {
+        it('proxies #format with options {with: /foo/}', function() {
+          var format = sinon.stub(Ratify.validators, 'format').returns('foo');
+          var result = Ratify.validators.pattern(/foo/);
+          sinon.restore(Ratify.validators, 'format');
+          expect(result).to.equal('foo');
+          return expect(format.calledWithExactly({with: /foo/})).to.be.true;
+        });
+      });
+    });
+
+    describe('#range', function() {
+      context('([1, 10])', function() {
+        it('proxies #numericality with options {greaterThanOrEqualTo: 1, lessThanOrEqualTo: 10}', function() {
+          var numericality = sinon.stub(Ratify.validators, 'numericality').returns('foo');
+          var result = Ratify.validators.range([1, 10]);
+          sinon.restore(Ratify.validators, 'numericality');
+          expect(result).to.equal('foo');
+          return expect(numericality.calledWithExactly({greaterThanOrEqualTo: 1, lessThanOrEqualTo: 10})).to.be.true;
+        });
+      });
+    });
+
+    describe('#rangeLength', function() {
+      context('([1, 10])', function() {
+        it('proxies #length with options {minimum: 1, maximum: 10}', function() {
+          var length = sinon.stub(Ratify.validators, 'length').returns('foo');
+          var result = Ratify.validators.rangeLength([1, 10]);
+          sinon.restore(Ratify.validators, 'length');
+          expect(result).to.equal('foo');
+          return expect(length.calledWithExactly({minimum: 1, maximum: 10})).to.be.true;
+        });
+      });
+    });
+
+    describe('#required', function() {
+      context('(true)', function() {
+        it('proxies #presence with argument true', function() {
+          var presence = sinon.stub(Ratify.validators, 'presence').returns('foo');
+          var result = Ratify.validators.required(true);
+          sinon.restore(Ratify.validators, 'presence');
+          expect(result).to.equal('foo');
+          return expect(presence.calledWithExactly(true)).to.be.true;
+        });
       });
     });
   });

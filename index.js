@@ -2,6 +2,9 @@ var _ = require('underscore');
 var Promise = require('bluebird');
 
 _.mixin({
+  //
+  // Retrieves a property value at a particular "path" into the object.
+  //
   deepGet: function(object, path) {
     var props = path.split('.');
     return _.compose.apply(null, props.reverse().map(_.property))(object);
@@ -70,7 +73,7 @@ var Ratify = {
   // - options (object): Configuration options passed to the validation method
   //
   getValidator: function(valName, options) {
-    var _validate = _.partial(this.validators[valName], _, _, options);
+    var _validate = this.validators[valName](options);
 
     return function validate(attrs, attrName) {
       return _validate(attrs, attrName)
@@ -175,18 +178,9 @@ var builtInValidators = {
   // Options:
   // - accept: array of values considered "accepted" (default: [true, 'true', 1, '1'])
   //
-  acceptance: function(attrs, attrName, acceptance) {
+  acceptance: function(acceptance) {
     var options = _.defaults(_.isObject(acceptance) ? acceptance : {}, {accept: [true, 'true', 1, '1']});
-    return this.inclusion(attrs, attrName, {in: options.accept});
-  },
-
-  //
-  // between validator
-  // Validates that attrs[attrName] is between the first and second numbers in an array, inclusive.
-  //
-  between: function(attrs, attrName, between) {
-    var value = _.deepGet(attrs, attrName);
-    return this.numericality(attrs, attrName, {greaterThanOrEqualTo: between[0], lessThanOrEqualTo: between[1]});
+    return this.inclusion({in: options.accept});
   },
 
   //
@@ -194,10 +188,12 @@ var builtInValidators = {
   // Validates that attrs[attrName] equals attrs[confirmation] (the attribute being confirmed).
   // e.g. confirmation({...}, 'passwordConfirmation', 'password')
   //
-  confirmation: function(attrs, attrName, confirmation) {
-    var value = _.deepGet(attrs, attrName);
-    var otherValue = _.deepGet(attrs, confirmation);
-    return rejectUnless(value == otherValue);
+  confirmation: function(attrToConfirm) {
+    return function(attrs, attrName) {
+      var value = _.deepGet(attrs, attrName);
+      var otherValue = _.deepGet(attrs, attrToConfirm);
+      return rejectUnless(value == otherValue);
+    }.bind(this);
   },
 
   //
@@ -211,12 +207,14 @@ var builtInValidators = {
   // Options:
   // - in (array): Reject if the value is found in this array
   //
-  exclusion: function(attrs, attrName, exclusion) {
-    var value = _.deepGet(attrs, attrName);
+  exclusion: function(exclusion) {
     var options = (_.isArray(exclusion) ? {in: exclusion} : exclusion) || {};
-    var set = options.in || [];
 
-    return rejectUnless(!_.contains(set, value));
+    return function(attrs, attrName) {
+      var value = _.deepGet(attrs, attrName);
+      var set = options.in || [];
+      return rejectUnless(!_.contains(set, value));
+    }.bind(this);
   },
 
   //
@@ -231,19 +229,22 @@ var builtInValidators = {
   // - with (RegExp): Reject if the value doesn't match this format
   // - without (RegExp): Reject if the value matches this format
   //
-  format: function(attrs, attrName, format) {
-    var value = _.deepGet(attrs, attrName);
+  format: function(format) {
     var options = _.isRegExp(format) ? {with: format} : format || {};
 
-    var pass = true;
-    if(pass && _.has(options, 'with')) {
-      pass = options.with.test(value);
-    }
-    if(pass && _.has(options, 'without')) {
-      pass = !options.without.test(value);
-    }
+    return function(attrs, attrName) {
+      var value = _.deepGet(attrs, attrName);
 
-    return rejectUnless(pass);
+      var pass = true;
+      if(pass && _.has(options, 'with')) {
+        pass = options.with.test(value);
+      }
+      if(pass && _.has(options, 'without')) {
+        pass = !options.without.test(value);
+      }
+
+      return rejectUnless(pass);
+    }.bind(this);
   },
 
   //
@@ -257,12 +258,15 @@ var builtInValidators = {
   // Options:
   // - in (array): Reject if the value is not found in this array
   //
-  inclusion: function(attrs, attrName, inclusion) {
-    var value = _.deepGet(attrs, attrName);
+  inclusion: function(inclusion) {
     var options = (_.isArray(inclusion) ? {in: inclusion} : inclusion) || {};
-    var set = options.in || [];
 
-    return rejectUnless(_.contains(set, value));
+    return function(attrs, attrName) {
+      var value = _.deepGet(attrs, attrName);
+      var set = options.in || [];
+
+      return rejectUnless(_.contains(set, value));
+    }.bind(this);
   },
 
   //
@@ -280,63 +284,28 @@ var builtInValidators = {
   // - minimum (number): Reject unless value is at most this long
   // - range (array): Reject unless value length is between these values, inclusive
   //
-  length: function(attrs, attrName, length) {
-    var value = _.deepGet(attrs, attrName);
+  length: function(length) {
     var options = (_.isNumber(length) ? {is: length} : (_.isArray(length) ? {range: length} : length)) || {};
 
-    var pass = _.isString(value);
-    if(pass && _.has(options, 'is')) {
-      pass = value.length === options.is;
-    }
-    if(pass && _.has(options, 'minimum')) {
-      pass = value.length >= options.minimum;
-    }
-    if(pass && _.has(options, 'maximum')) {
-      pass = value.length <= options.maximum;
-    }
-    if(pass && _.has(options, 'range')) {
-      pass = (value.length >= options.range[0] && value.length <= options.range[1]);
-    }
+    return function(attrs, attrName) {
+      var value = _.deepGet(attrs, attrName);
 
-    return rejectUnless(pass);
-  },
+      var pass = _.isString(value);
+      if(pass && _.has(options, 'is')) {
+        pass = value.length === options.is;
+      }
+      if(pass && _.has(options, 'minimum')) {
+        pass = value.length >= options.minimum;
+      }
+      if(pass && _.has(options, 'maximum')) {
+        pass = value.length <= options.maximum;
+      }
+      if(pass && _.has(options, 'range')) {
+        pass = (value.length >= options.range[0] && value.length <= options.range[1]);
+      }
 
-  //
-  // max validator
-  // Validates that attrs[attrName] is not greater than a certain number.
-  //
-  max: function(attrs, attrName, max) {
-    return this.numericality(attrs, attrName, {lessThanOrEqualTo: max});
-  },
-
-  //
-  // maxLength validator
-  // Validates that the length of attrs[attrName] is at most n characters.
-  //
-  // Parameters:
-  // - maxLength (number): Reject if the value's length is greater than this number
-  //
-  maxLength: function(attrs, attrName, maxLength) {
-    return this.length(attrs, attrName, {maximum: maxLength});
-  },
-
-  //
-  // min validator
-  // Validates that attrs[attrName] is not less than a certain number.
-  //
-  min: function(attrs, attrName, min) {
-    return this.numericality(attrs, attrName, {greaterThanOrEqualTo: min});
-  },
-
-  //
-  // minLength validator
-  // Validates that the length of attrs[attrName] is at least n characters.
-  //
-  // Parameters:
-  // - minLength (number): Reject if the value's length is less than this number
-  //
-  minLength: function(attrs, attrName, minLength) {
-    return this.length(attrs, attrName, {minimum: minLength});
+      return rejectUnless(pass);
+    }.bind(this);
   },
 
   //
@@ -354,64 +323,165 @@ var builtInValidators = {
   // - even (boolean): Reject unless the value is even
   // - odd (boolean): Reject unless the value is odd
   //
-  numericality: function(attrs, attrName, numericality) {
-    var value = _.deepGet(attrs, attrName);
-    var options = numericality || {};
+  numericality: function(options) {
+    options = options || {};
 
-    var pass = (_.isNumber(value) || _.isString(value) && value.match(/^-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/));
-    if(pass && _.has(options, 'greaterThan')) {
-      pass = value > options.greaterThan;
-    }
-    if(pass && _.has(options, 'greaterThanOrEqualTo')) {
-      pass = value >= options.greaterThanOrEqualTo;
-    }
-    if(pass && _.has(options, 'equalTo')) {
-      pass = value == options.equalTo;
-    }
-    if(pass && _.has(options, 'lessThanOrEqualTo')) {
-      pass = value <= options.lessThanOrEqualTo;
-    }
-    if(pass && _.has(options, 'lessThan')) {
-      pass = value < options.lessThan;
-    }
-    if(pass && _.has(options, 'otherThan')) {
-      pass = value != options.otherThan;
-    }
-    if(pass && options.onlyInteger) {
-      pass = !isNaN(value) && parseInt(Number(value)) == value && !isNaN(parseInt(value,10));
-    }
-    if(pass && options.even) {
-      pass = (value % 2) === 0;
-    }
-    if(pass && options.odd) {
-      pass = (value % 2) === 1;
-    }
-    return rejectUnless(pass);
+    return function(attrs, attrName) {
+      var value = _.deepGet(attrs, attrName);
+
+      var pass = (_.isNumber(value) || _.isString(value) && value.match(/^-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/));
+      if(pass && _.has(options, 'greaterThan')) {
+        pass = value > options.greaterThan;
+      }
+      if(pass && _.has(options, 'greaterThanOrEqualTo')) {
+        pass = value >= options.greaterThanOrEqualTo;
+      }
+      if(pass && _.has(options, 'equalTo')) {
+        pass = value == options.equalTo;
+      }
+      if(pass && _.has(options, 'lessThanOrEqualTo')) {
+        pass = value <= options.lessThanOrEqualTo;
+      }
+      if(pass && _.has(options, 'lessThan')) {
+        pass = value < options.lessThan;
+      }
+      if(pass && _.has(options, 'otherThan')) {
+        pass = value != options.otherThan;
+      }
+      if(pass && options.onlyInteger) {
+        pass = !isNaN(value) && parseInt(Number(value)) == value && !isNaN(parseInt(value,10));
+      }
+      if(pass && options.even) {
+        pass = (value % 2) === 0;
+      }
+      if(pass && options.odd) {
+        pass = (value % 2) === 1;
+      }
+
+      return rejectUnless(pass);
+    }.bind(this);
   },
 
   //
   // presence validator
   // Validates that attrs[attrName] is neither null, undefined, a blank string, nor an empty array.
   //
-  presence: function(attrs, attrName, presence) {
-    var value = _.deepGet(attrs, attrName);
-    var fail = presence && (_.isNull(value) || _.isUndefined(value) || (_.isString(value) && value.match(/^\s*$/)) || (_.isArray(value) && _.isEmpty(value)));
-    return rejectUnless(!fail);
+  presence: function(presence) {
+    return function(attrs, attrName) {
+      var value = _.deepGet(attrs, attrName);
+      var fail = presence && (_.isNull(value) || _.isUndefined(value) || (_.isString(value) && value.match(/^\s*$/)) || (_.isArray(value) && _.isEmpty(value)));
+      return rejectUnless(!fail);
+    }.bind(this);
   },
 
   //
   // absence validator
   // Validates that attrs[attrName] is either null, undefined, a blank string, or an empty array.
   //
-  absence: function(attrs, attrName, absence) {
-    var value = _.deepGet(attrs, attrName);
-    var fail = absence && !(_.isNull(value) || _.isUndefined(value) || (_.isString(value) && value.match(/^\s*$/)) || (_.isArray(value) && _.isEmpty(value)));
-    return rejectUnless(!fail);
+  absence: function(absence) {
+    return function(attrs, attrName) {
+      var value = _.deepGet(attrs, attrName);
+      var fail = absence && !(_.isNull(value) || _.isUndefined(value) || (_.isString(value) && value.match(/^\s*$/)) || (_.isArray(value) && _.isEmpty(value)));
+      return rejectUnless(!fail);
+    }.bind(this);
   }
 };
 
 // Add the built-in validators the same way users will add them.
 _.each(builtInValidators, function(name, fn) {
+  Ratify.addValidator(fn, name);
+});
+
+var backboneValidateValidators = {
+  //
+  // equalTo validator
+  // Alias of #confirmation.
+  //
+  equalTo: function(equalTo) {
+    return this.confirmation(equalTo);
+  },
+
+  //
+  // max validator
+  // Validates that attrs[attrName] is not greater than a certain number.
+  //
+  max: function(max) {
+    return this.numericality({lessThanOrEqualTo: max});
+  },
+
+  //
+  // maxLength validator
+  // Validates that the length of attrs[attrName] is at most n characters.
+  //
+  // Parameters:
+  // - maxLength (number): Reject if the value's length is greater than this number
+  //
+  maxLength: function(maxLength) {
+    return this.length({maximum: maxLength});
+  },
+
+  //
+  // min validator
+  // Validates that attrs[attrName] is not less than a certain number.
+  //
+  min: function(min) {
+    return this.numericality({greaterThanOrEqualTo: min});
+  },
+
+  //
+  // minLength validator
+  // Validates that the length of attrs[attrName] is at least n characters.
+  //
+  // Parameters:
+  // - minLength (number): Reject if the value's length is less than this number
+  //
+  minLength: function(minLength) {
+    return this.length({minimum: minLength});
+  },
+
+  //
+  // oneOf validator
+  // Alias of #inclusion.
+  //
+  oneOf: function(oneOf) {
+    return this.inclusion({in: oneOf});
+  },
+
+  //
+  // pattern validator
+  // Alias of #format.
+  //
+  pattern: function(pattern) {
+    return this.format({with: pattern});
+  },
+
+  //
+  // range validator
+  // Validates that attrs[attrName] is between the first and second numbers in an array, inclusive.
+  //
+  range: function(range) {
+    return this.numericality({greaterThanOrEqualTo: range[0], lessThanOrEqualTo: range[1]});
+  },
+
+  //
+  // rangeLength validator
+  // Validates that attrs[attrName]'s length is between the first and second numbers in an array, inclusive.
+  //
+  rangeLength: function(range) {
+    return this.length({minimum: range[0], maximum: range[1]});
+  },
+
+  //
+  // required validator
+  // Alias of #presence.
+  //
+  required: function(required) {
+    return this.presence(required);
+  }
+};
+
+// Add the Backbone.Validation validators the same way users will add them.
+_.each(backboneValidateValidators, function(name, fn) {
   Ratify.addValidator(fn, name);
 });
 
