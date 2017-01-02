@@ -10,6 +10,8 @@ engines:
       - php
   eslint:
     enabled: true
+    exclude_fingerprints:
+    - 0e2874eb10b15f5d1fd91065e150d359 # numericality complexity
   fixme:
     enabled: true
 ratings:

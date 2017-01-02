@@ -501,8 +501,8 @@ var backboneValidateValidators = {
   // rangeLength validator
   // Validates that attrs[attrName]'s length is between the first and second numbers in an array, inclusive.
   //
-  rangeLength: function(range) {
-    return this.length({minimum: range[0], maximum: range[1]});
+  rangeLength: function(rangeLength) {
+    return this.length({minimum: rangeLength[0], maximum: rangeLength[1]});
   },
 
   //
