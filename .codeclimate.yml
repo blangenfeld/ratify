@@ -12,6 +12,7 @@ engines:
     enabled: true
     exclude_fingerprints:
     - 0e2874eb10b15f5d1fd91065e150d359 # numericality complexity
+    - 1163ea15068f012682d37bf2f473d797 # range/rangeLength "duplication"
   fixme:
     enabled: true
 ratings:
