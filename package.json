@@ -4,7 +4,7 @@
   "description": "Promise-based validation library",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_ENV=test RATIFY_COVERAGE=1 mocha --require blanket --reporter mocha-lcov-reporter | ./node_modules/coveralls/bin/coveralls.js"
+    "test": "NODE_ENV=test mocha --require blanket --reporter mocha-lcov-reporter | ./node_modules/codeclimate-test-reporter/bin/codeclimate.js"
   },
   "repository": {
     "type": "git",
@@ -27,7 +27,8 @@
     "blanket": "^1.2.3",
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
-    "coveralls": "^2.11.15",
+    "codeclimate-test-reporter": "^0.4.0",
+    "dotenv": "^2.0.0",
     "mocha": "^3.2.0",
     "mocha-lcov-reporter": "^1.2.0",
     "sinon": "^1.17.6"
@@ -39,7 +40,10 @@
   "config": {
     "blanket": {
       "pattern": "",
-      "data-cover-never": ["node_modules", "test"]
+      "data-cover-never": [
+        "node_modules",
+        "test"
+      ]
     }
   }
 }

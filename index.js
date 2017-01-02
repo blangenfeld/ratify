@@ -199,7 +199,7 @@ var builtInValidators = {
     return function(attrs, attrName) {
       var value = _.deepGet(attrs, attrName);
       var otherValue = _.deepGet(attrs, attrToConfirm);
-      return rejectUnless(value == otherValue);
+      return rejectUnless(value === otherValue);
     };
   },
 
