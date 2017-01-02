@@ -9,7 +9,7 @@
     "lint": "./node_modules/.bin/eslint index.js test/test.js",
     "coverage": "./node_modules/.bin/istanbul cover --dir ./reports _mocha -- -R spec test/test.js",
     "codeclimate": "./node_modules/.bin/codeclimate-test-reporter < reports/lcov.info",
-    "clean": "rm -rf reports",
+    "clean": "rm -rf coverage reports",
     "ci": "npm run clean && npm run lint && npm run test && npm run coverage && npm run codeclimate"
   },
   "repository": {

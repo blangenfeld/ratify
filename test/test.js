@@ -177,6 +177,18 @@ describe('Ratify', function() {
           });
         });
       });
+
+      context("({accept: 'foo'})", function() {
+        var validate = Ratify.validators.acceptance({accept: 'foo'});
+
+        it('resolves when passed ({a: "foo"}, "a")', function() {
+          return expect(validate({a: "foo"}, "a")).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: true}, "a")', function() {
+          return expect(validate({a: true}, "a")).to.eventually.be.rejected;
+        });
+      });
     });
 
     describe('#confirmation', function() {

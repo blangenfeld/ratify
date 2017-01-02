@@ -245,7 +245,8 @@ var builtInValidators = {
 
     return function(attrs, attrName) {
       var value = _.deepGet(attrs, attrName);
-      var set = options.in || [];
+      var set = [].concat(options.in || []);
+      
       return rejectUnless(!_.contains(set, value));
     };
   },
@@ -296,7 +297,7 @@ var builtInValidators = {
 
     return function(attrs, attrName) {
       var value = _.deepGet(attrs, attrName);
-      var set = options.in || [];
+      var set = [].concat(options.in || []);
 
       return rejectUnless(_.contains(set, value));
     };
