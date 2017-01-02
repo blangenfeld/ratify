@@ -15,10 +15,10 @@ _.mixin({
 // ValidationError is rejected from validation-related promises. If you catch one, inspect its
 // .errors property to see which specific validations failed.
 //
-function ValidationError(errors) {
-  this.message = "Validation error";
-  this.name = "ValidationError";
+function ValidationError(message, errors) {
+  this.message = message || "Validation error";
   this.errors = errors || {};
+  this.name = "ValidationError";
   Error.captureStackTrace(this, ValidationError);
 }
 ValidationError.prototype = Object.create(Error.prototype);
@@ -34,8 +34,8 @@ function isValidationError(e) {
 //
 // Convenience method
 //
-function rejectUnless(ok) {
-  return ok ? Promise.resolve() : Promise.reject(new ValidationError());
+function rejectUnless(ok, message, errors) {
+  return ok ? Promise.resolve() : Promise.reject(new ValidationError(message, errors));
 }
 
 //
@@ -51,6 +51,10 @@ function isEmpty(value) {
 function isInteger(value) {
   var parsed = parseFloat(value);
   return !isNaN(value) && ((parsed | 0) === parsed);
+}
+
+function joinKeys(object) {
+  return _.keys(object).sort().join(', ');
 }
 
 //
@@ -114,6 +118,7 @@ var Ratify = {
     return function validate(attrs, attrName) {
       return _validate(attrs, attrName)
         .catch(isValidationError, function(e) {
+          e.message = 'failed validation: ' + valName;
           e.errors[valName] = true;
           throw e;
         });
@@ -151,7 +156,8 @@ var Ratify = {
       });
       return settleAll(promises)
         .catch(isValidationError, function() {
-          throw new ValidationError(errors);
+          var message = 'attribute "' + attrName + '" failed validation: ' + joinKeys(errors);
+          throw new ValidationError(message, errors);
         });
     };
   },
@@ -184,7 +190,8 @@ var Ratify = {
       });
       return settleAll(promises)
         .catch(isValidationError, function() {
-          throw new ValidationError(errors);
+          var message = 'model failed validation: ' + joinKeys(errors);
+          throw new ValidationError(message, errors);
         });
     };
   }

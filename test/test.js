@@ -52,8 +52,8 @@ describe('Ratify', function() {
 
     it('returns a promise rejecting with a descriptive ValidationError upon failure', function() {
       return expect(validator({}, 'a')).to.eventually.be.rejectedWith(ValidationError)
-        .and.have.property('errors')
-        .to.deep.equal({presence: true});
+        .and.to.include({message: 'failed validation: presence'})
+        .and.have.property('errors').to.deep.equal({presence: true});
     });
   });
 
@@ -70,8 +70,8 @@ describe('Ratify', function() {
 
     it('returns a promise rejecting with a descriptive ValidationError upon failure', function() {
       return expect(validator({a: 'not 42'}, 'a')).to.eventually.be.rejectedWith(ValidationError)
-        .and.have.property('errors')
-        .to.deep.equal({fortyTwo: true});
+        .and.to.include({message: 'failed validation: fortyTwo'})
+        .and.have.property('errors').to.deep.equal({fortyTwo: true});
     });
   });
 
@@ -93,8 +93,8 @@ describe('Ratify', function() {
 
     it('returns a promise rejecting with a descriptive ValidationError upon failure', function() {
       return expect(validator({}, 'a')).to.eventually.be.rejectedWith(ValidationError)
-        .and.have.property('errors')
-        .to.deep.equal({presence: true, numericality: true, fortyTwo: true});
+        .and.to.include({message: 'attribute "a" failed validation: fortyTwo, numericality, presence'})
+        .and.have.property('errors').to.deep.equal({presence: true, numericality: true, fortyTwo: true});
     });
   });
 
@@ -117,8 +117,8 @@ describe('Ratify', function() {
 
     it('returns a promise rejecting with a descriptive ValidationError upon failure', function() {
       return expect(validator({username: 'foo', password: 'hi', email: 'blah', answer: 123})).to.eventually.be.rejectedWith(ValidationError)
-        .and.have.property('errors')
-        .to.deep.equal({password: {minLength: true}, email: {format: true}, answer: {fortyTwo: true}});
+        .and.to.include({message: 'model failed validation: answer, email, password'})
+        .and.have.property('errors').to.deep.equal({password: {minLength: true}, email: {format: true}, answer: {fortyTwo: true}});
     });
   });
 
