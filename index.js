@@ -27,6 +27,13 @@ function rejectUnless(ok) {
 }
 
 //
+// Returns true if `value` is null, undefined, a blank string, or an empty array.
+//
+function isEmpty(value) {
+  return (_.isNull(value) || _.isUndefined(value) || (_.isString(value) && value.match(/^\s*$/)) || (_.isArray(value) && _.isEmpty(value)))
+}
+
+//
 // settleAll ensures that *all* of the passed promises either resolve or reject. Only *after* they
 // do will the returned promise either resolve (if *all* resolved) or reject (if *any* rejected).
 //
@@ -193,7 +200,7 @@ var builtInValidators = {
       var value = _.deepGet(attrs, attrName);
       var otherValue = _.deepGet(attrs, attrToConfirm);
       return rejectUnless(value == otherValue);
-    }.bind(this);
+    };
   },
 
   //
@@ -214,7 +221,7 @@ var builtInValidators = {
       var value = _.deepGet(attrs, attrName);
       var set = options.in || [];
       return rejectUnless(!_.contains(set, value));
-    }.bind(this);
+    };
   },
 
   //
@@ -244,7 +251,7 @@ var builtInValidators = {
       }
 
       return rejectUnless(pass);
-    }.bind(this);
+    };
   },
 
   //
@@ -266,7 +273,7 @@ var builtInValidators = {
       var set = options.in || [];
 
       return rejectUnless(_.contains(set, value));
-    }.bind(this);
+    };
   },
 
   //
@@ -305,7 +312,7 @@ var builtInValidators = {
       }
 
       return rejectUnless(pass);
-    }.bind(this);
+    };
   },
 
   //
@@ -337,7 +344,7 @@ var builtInValidators = {
         pass = value >= options.greaterThanOrEqualTo;
       }
       if(pass && _.has(options, 'equalTo')) {
-        pass = value == options.equalTo;
+        pass = value === options.equalTo;
       }
       if(pass && _.has(options, 'lessThanOrEqualTo')) {
         pass = value <= options.lessThanOrEqualTo;
@@ -346,10 +353,10 @@ var builtInValidators = {
         pass = value < options.lessThan;
       }
       if(pass && _.has(options, 'otherThan')) {
-        pass = value != options.otherThan;
+        pass = value !== options.otherThan;
       }
       if(pass && options.onlyInteger) {
-        pass = !isNaN(value) && parseInt(Number(value)) == value && !isNaN(parseInt(value,10));
+        pass = !isNaN(value) && parseInt(Number(value), 10) == value && !isNaN(parseInt(value, 10));
       }
       if(pass && options.even) {
         pass = (value % 2) === 0;
@@ -359,7 +366,7 @@ var builtInValidators = {
       }
 
       return rejectUnless(pass);
-    }.bind(this);
+    };
   },
 
   //
@@ -369,9 +376,9 @@ var builtInValidators = {
   presence: function(presence) {
     return function(attrs, attrName) {
       var value = _.deepGet(attrs, attrName);
-      var fail = presence && (_.isNull(value) || _.isUndefined(value) || (_.isString(value) && value.match(/^\s*$/)) || (_.isArray(value) && _.isEmpty(value)));
+      var fail = presence && isEmpty(value);
       return rejectUnless(!fail);
-    }.bind(this);
+    };
   },
 
   //
@@ -381,9 +388,9 @@ var builtInValidators = {
   absence: function(absence) {
     return function(attrs, attrName) {
       var value = _.deepGet(attrs, attrName);
-      var fail = absence && !(_.isNull(value) || _.isUndefined(value) || (_.isString(value) && value.match(/^\s*$/)) || (_.isArray(value) && _.isEmpty(value)));
+      var fail = absence && !isEmpty(value);
       return rejectUnless(!fail);
-    }.bind(this);
+    };
   }
 };
 
