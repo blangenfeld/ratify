@@ -18,10 +18,22 @@ _.mixin({
 function ValidationError(errors) {
   this.message = "Validation error";
   this.name = "ValidationError";
-  this.errors = errors;
+  this.errors = errors || {};
+  Error.captureStackTrace(this, ValidationError);
 }
 ValidationError.prototype = Object.create(Error.prototype);
+ValidationError.prototype.constructor = ValidationError;
 
+//
+// Predicate for use in promise .catch
+//
+function isValidationError(e) {
+  return e instanceof Error && e.name === "ValidationError";
+}
+
+//
+// Convenience method
+//
 function rejectUnless(ok) {
   return ok ? Promise.resolve() : Promise.reject(new ValidationError());
 }
@@ -58,6 +70,8 @@ function settleAll(promises) {
 }
 
 var Ratify = {
+  ValidationError: ValidationError,
+
   //
   // Contains all of the validation methods. Use #addValidator to add some.
   //
@@ -74,7 +88,8 @@ var Ratify = {
 
   //
   // Returns a function that takes (attrs, attrName), runs the `valName` validator (configured with
-  // the passed options) and returns a promise.
+  // the passed options) and returns a promise. If `valName` isn't a known validator AND `options`
+  // is a function, assumes the function is an inline validation function.
   //
   // The returned promise from that function rejects with a ValidationError if the validator fails.
   // Check the ValidationError's .errors property to see the name of the failing validator.
@@ -85,17 +100,20 @@ var Ratify = {
   //
   // Parameters:
   // - valName (string): Name of the validation method powering the validator
-  // - options (object): Configuration options passed to the validation method
+  // - options (object|function): Configuration options passed to the validation method, OR an
+  //   inline validation function taking `attrs` and `attrName` and returning a promise.
   //
   getValidator: function(valName, options) {
-    var _validate = this.validators[valName](options);
+    var _validate = this.validators[valName] ? this.validators[valName](options) : null;
+    if(!_validate && _.isFunction(options)) {
+      _validate = options; // Inline validator was specified
+    }
 
     return function validate(attrs, attrName) {
       return _validate(attrs, attrName)
-        .catch(ValidationError, function(e) {
-          var errors = e.errors || {};
-          errors[valName] = true;
-          return Promise.reject(new ValidationError(errors));
+        .catch(isValidationError, function(e) {
+          e.errors[valName] = true;
+          throw e;
         });
     };
   },
@@ -124,14 +142,14 @@ var Ratify = {
     return function validateAttribute(attrs, attrName) {
       var promises = _.map(validators, function(validator) {
         return validator(attrs, attrName)
-          .catch(ValidationError, function(e) {
+          .catch(isValidationError, function(e) {
             _.extend(errors, e.errors);
-            return Promise.reject(e);
+            throw e;
           });
       });
       return settleAll(promises)
-        .catch(ValidationError, function() {
-          return Promise.reject(new ValidationError(errors));
+        .catch(isValidationError, function() {
+          throw new ValidationError(errors);
         });
     };
   },
@@ -157,14 +175,14 @@ var Ratify = {
       var attrValidatorsToRun = _.pick(attrValidators, attrNames || _.keys(attrRules));
       var promises = _.map(attrValidatorsToRun, function(validators, attrName) {
         return validators(attrs, attrName)
-          .catch(ValidationError, function(e) {
+          .catch(isValidationError, function(e) {
             errors[attrName] = e.errors;
-            return Promise.reject(e);
+            throw e;
           });
       });
       return settleAll(promises)
-        .catch(ValidationError, function() {
-          return Promise.reject(new ValidationError(errors));
+        .catch(isValidationError, function() {
+          throw new ValidationError(errors);
         });
     };
   }

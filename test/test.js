@@ -7,6 +7,7 @@ var chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 var expect = chai.expect;
 
+var Promise = require('bluebird');
 var Ratify = require('../index');
 var ValidationError = Ratify.ValidationError;
 
@@ -16,6 +17,11 @@ function toString(value) {
   if(_.isString(value)) return "'" + value + "'";
   if(value === 0 && (1/value < 0)) return '-0';
   return '' + value;
+}
+
+// Dummy validator for testing inline validation rules
+function fortyTwo(attrs, attrName) {
+  return attrs[attrName] === 42 ? Promise.resolve() : Promise.reject(new ValidationError());
 }
 
 describe('Underscore mixins', function() {
@@ -33,7 +39,7 @@ describe('Underscore mixins', function() {
 });
 
 describe('Ratify', function() {
-  describe('single validator', function() {
+  describe('single built-in validator', function() {
     var validator = Ratify.getValidator('presence', true);
 
     it('is returned from #getValidator', function() {
@@ -51,10 +57,29 @@ describe('Ratify', function() {
     });
   });
 
+  describe('single inline validator', function() {
+    var validator = Ratify.getValidator('fortyTwo', fortyTwo);
+
+    it('is returned from #getValidator', function() {
+      return expect(validator).to.be.a('function');
+    });
+
+    it('resolves upon success', function() {
+      return expect(validator({a: 42}, 'a')).to.eventually.be.resolved;
+    });
+
+    it('returns a promise rejecting with a descriptive ValidationError upon failure', function() {
+      return expect(validator({a: 'not 42'}, 'a')).to.eventually.be.rejectedWith(ValidationError)
+        .and.have.property('errors')
+        .to.deep.equal({fortyTwo: true});
+    });
+  });
+
   describe('attribute validator', function() {
     var rules = {
       presence: true,
-      numericality: true
+      numericality: true,
+      fortyTwo: fortyTwo // inline
     };
     var validator = Ratify.getAttributeValidator(rules);
 
@@ -63,13 +88,13 @@ describe('Ratify', function() {
     });
 
     it('resolves upon success', function() {
-      return expect(validator({a: 1}, 'a')).to.eventually.be.resolved;
+      return expect(validator({a: 42}, 'a')).to.eventually.be.resolved;
     });
 
     it('returns a promise rejecting with a descriptive ValidationError upon failure', function() {
       return expect(validator({}, 'a')).to.eventually.be.rejectedWith(ValidationError)
         .and.have.property('errors')
-        .to.deep.equal({presence: true, numericality: true});
+        .to.deep.equal({presence: true, numericality: true, fortyTwo: true});
     });
   });
 
@@ -77,7 +102,8 @@ describe('Ratify', function() {
     var attrRules = {
       username: {presence: true},
       password: {presence: true, minLength: 5},
-      email: {format: /\w+@\w+/}
+      email: {format: /\w+@\w+/},
+      answer: {fortyTwo: fortyTwo} // inline
     };
     var validator = Ratify.getModelValidator(attrRules);
 
@@ -86,13 +112,13 @@ describe('Ratify', function() {
     });
 
     it('resolves upon success', function() {
-      return expect(validator({username: 'foo', password: 'asdf123', email: 'foo@bar.com'})).to.eventually.be.resolved;
+      return expect(validator({username: 'foo', password: 'asdf123', email: 'foo@bar.com', answer:42})).to.eventually.be.resolved;
     });
 
     it('returns a promise rejecting with a descriptive ValidationError upon failure', function() {
-      return expect(validator({username: 'foo', password: 'hi', email: 'blah'})).to.eventually.be.rejectedWith(ValidationError)
+      return expect(validator({username: 'foo', password: 'hi', email: 'blah', answer: 123})).to.eventually.be.rejectedWith(ValidationError)
         .and.have.property('errors')
-        .to.deep.equal({password: {minLength: true}, email: {format: true}});
+        .to.deep.equal({password: {minLength: true}, email: {format: true}, answer: {fortyTwo: true}});
     });
   });
 

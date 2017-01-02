@@ -4,6 +4,7 @@
   "description": "Promise-based validation library",
   "main": "index.js",
   "scripts": {
+    "debug": "npm test -- --inspect --debug-brk",
     "test": "mocha -R spec test/test.js",
     "lint": "./node_modules/.bin/eslint index.js test/test.js",
     "coverage": "./node_modules/.bin/istanbul cover --dir ./reports _mocha -- -R spec test/test.js",
