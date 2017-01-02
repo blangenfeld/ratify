@@ -400,6 +400,102 @@ describe('Ratify', function() {
         });
       });
 
+      context('({greaterThan: 1})', function() {
+        var validate = Ratify.validators.numericality({greaterThan: 1});
+
+        it('rejects when passed ({a: 0}, "a")', function() {
+          return expect(validate({a: 0}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('rejects when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 1}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('resolves when passed ({a: 2}, "a")', function() {
+          return expect(validate({a: 2}, 'a')).to.eventually.be.resolved;
+        });
+      });
+
+      context('({greaterThanOrEqualTo: 1})', function() {
+        var validate = Ratify.validators.numericality({greaterThanOrEqualTo: 1});
+
+        it('rejects when passed ({a: 0}, "a")', function() {
+          return expect(validate({a: 0}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('resolves when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 1}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('resolves when passed ({a: 2}, "a")', function() {
+          return expect(validate({a: 2}, 'a')).to.eventually.be.resolved;
+        });
+      });
+
+      context('({equalTo: 1})', function() {
+        var validate = Ratify.validators.numericality({equalTo: 1});
+
+        it('rejects when passed ({a: 0}, "a")', function() {
+          return expect(validate({a: 0}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('resolves when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 1}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: 2}, "a")', function() {
+          return expect(validate({a: 2}, 'a')).to.eventually.be.rejected;
+        });
+      });
+
+      context('({lessThanOrEqualTo: 1})', function() {
+        var validate = Ratify.validators.numericality({lessThanOrEqualTo: 1});
+
+        it('resolves when passed ({a: 0}, "a")', function() {
+          return expect(validate({a: 0}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('resolves when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 1}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: 2}, "a")', function() {
+          return expect(validate({a: 2}, 'a')).to.eventually.be.rejected;
+        });
+      });
+
+      context('({lessThan: 1})', function() {
+        var validate = Ratify.validators.numericality({lessThan: 1});
+
+        it('resolves when passed ({a: 0}, "a")', function() {
+          return expect(validate({a: 0}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 1}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('rejects when passed ({a: 2}, "a")', function() {
+          return expect(validate({a: 2}, 'a')).to.eventually.be.rejected;
+        });
+      });
+
+      context('({otherThan: 1})', function() {
+        var validate = Ratify.validators.numericality({otherThan: 1});
+
+        it('resolves when passed ({a: 0}, "a")', function() {
+          return expect(validate({a: 0}, 'a')).to.eventually.be.resolved;
+        });
+
+        it('rejects when passed ({a: 1}, "a")', function() {
+          return expect(validate({a: 1}, 'a')).to.eventually.be.rejected;
+        });
+
+        it('resolves when passed ({a: 2}, "a")', function() {
+          return expect(validate({a: 2}, 'a')).to.eventually.be.resolved;
+        });
+      });
+
       context('({onlyInteger: true})', function() {
         var validate = Ratify.validators.numericality({onlyInteger: true});
 

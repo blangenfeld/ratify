@@ -61,7 +61,7 @@ var Ratify = {
   // Returns a function that takes (attrs, attrName), runs the `valName` validator (configured with
   // the passed options) and returns a promise.
   //
-  // The returned promise from that function rejects with a ValidatioNError if the validator fails.
+  // The returned promise from that function rejects with a ValidationError if the validator fails.
   // Check the ValidationError's .errors property to see the name of the failing validator.
   //
   // Validators returned from this function probably aren't useful on their own -- they run a

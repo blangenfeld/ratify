@@ -4,7 +4,7 @@
   "description": "Promise-based validation library",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --reporter spec"
+    "test": "NODE_ENV=test RATIFY_COVERAGE=1 mocha --require blanket --reporter mocha-lcov-reporter | ./node_modules/coveralls/bin/coveralls.js"
   },
   "repository": {
     "type": "git",
@@ -24,13 +24,22 @@
     "node": ">=6.2.1"
   },
   "devDependencies": {
+    "blanket": "^1.2.3",
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
+    "coveralls": "^2.11.15",
     "mocha": "^3.2.0",
+    "mocha-lcov-reporter": "^1.2.0",
     "sinon": "^1.17.6"
   },
   "dependencies": {
     "bluebird": "^3.4.7",
     "underscore": "^1.8.3"
+  },
+  "config": {
+    "blanket": {
+      "pattern": "",
+      "data-cover-never": ["node_modules", "test"]
+    }
   }
 }
