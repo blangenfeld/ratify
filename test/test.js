@@ -23,11 +23,11 @@ describe('Underscore mixins', function() {
     var deepGet = _.deepGet;
 
     it('returns a value if the path is valid', function() {
-      expect(deepGet({a: {b: {c: 42}}}, 'a.b.c')).to.equal(42);
+      return expect(deepGet({a: {b: {c: 42}}}, 'a.b.c')).to.equal(42);
     });
 
     it('returns undefined if the path is invalid', function() {
-      expect(deepGet({}, 'foo')).to.be.undefined;
+      return expect(deepGet({}, 'foo')).to.be.undefined;
     });
   });
 });
@@ -37,7 +37,7 @@ describe('Ratify', function() {
     var validator = Ratify.getValidator('presence', true);
 
     it('is returned from #getValidator', function() {
-      expect(validator).to.be.a('function');
+      return expect(validator).to.be.a('function');
     });
 
     it('resolves upon success', function() {
@@ -59,7 +59,7 @@ describe('Ratify', function() {
     var validator = Ratify.getAttributeValidator(rules);
 
     it('is returned from #getAttributeValidator', function() {
-      expect(validator).to.be.a('function');
+      return expect(validator).to.be.a('function');
     });
 
     it('resolves upon success', function() {
@@ -77,12 +77,12 @@ describe('Ratify', function() {
     var attrRules = {
       username: {presence: true},
       password: {presence: true, minLength: 5},
-      email: {format: /\w+@\w+/},
+      email: {format: /\w+@\w+/}
     };
     var validator = Ratify.getModelValidator(attrRules);
 
     it('is returned from #getModelValidator', function() {
-      expect(validator).to.be.a('function');
+      return expect(validator).to.be.a('function');
     });
 
     it('resolves upon success', function() {
