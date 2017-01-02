@@ -1,6 +1,9 @@
 # Ratify
 
-[![Coverage Status](https://coveralls.io/repos/github/blangenfeld/ratify/badge.svg?branch=master)](https://coveralls.io/github/blangenfeld/ratify?branch=master)
+[![Test Coverage](https://codeclimate.com/github/blangenfeld/ratify/badges/coverage.svg)](https://codeclimate.com/github/blangenfeld/ratify/coverage)
+[![Issue Count](https://codeclimate.com/github/blangenfeld/ratify/badges/issue_count.svg)](https://codeclimate.com/github/blangenfeld/ratify)
+[![Code Climate](https://codeclimate.com/github/blangenfeld/ratify/badges/gpa.svg)](https://codeclimate.com/github/blangenfeld/ratify)
+
 
 Promise-based attribute and model validation library.
 
