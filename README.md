@@ -17,13 +17,13 @@ Doesn't:
 - handle error message formatting
 - care what frameworks or other libraries you use
 
-See my [blog post](https://knotfield.com/blog) (actual link coming soon) about this thing for a more detailed writeup -- motivation, use cases, design considerations, et cetera.
+See my [blog post](http://knotfield.com/blog) (actual link coming soon) about this thing for a more detailed writeup -- motivation, use cases, design considerations, et cetera.
 
 ## Examples
 
 ```javascript
 // Describe the validation function you want.
-var validateModel = Ratify.getModelValidator({
+var validate = Ratify.getModelValidator({
   username: {presence: true},
   password: {presence: true, length: {minimum: 5}},
   passwordConfirmation: {confirmation: 'password'},
@@ -34,7 +34,7 @@ var validateModel = Ratify.getModelValidator({
 var attrs = {username: 'brian', password: 'wat?', passwordConfirmation: '', email: 'not-an-email!'};
 
 // Validate all attributes.
-validateModel(attrs)
+validate(attrs)
   .then(function() {
     // All attributes are valid
     console.log('all OK!');
@@ -46,7 +46,7 @@ validateModel(attrs)
   });
 
 // Validate individual attributes
-validateModel(attrs, 'email')
+validate(attrs, 'email')
   .then(function() {
     // Attribute is valid
     console.log('email OK');

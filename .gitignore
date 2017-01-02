@@ -38,3 +38,7 @@ jspm_packages
 
 # Dotenv file
 .env
+
+# Coverage reports
+html-report
+reports

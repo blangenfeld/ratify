@@ -30,7 +30,15 @@ function rejectUnless(ok) {
 // Returns true if `value` is null, undefined, a blank string, or an empty array.
 //
 function isEmpty(value) {
-  return (_.isNull(value) || _.isUndefined(value) || (_.isString(value) && value.match(/^\s*$/)) || (_.isArray(value) && _.isEmpty(value)))
+  return (_.isNull(value) || _.isUndefined(value) || (_.isString(value) && value.match(/^\s*$/)) || (_.isArray(value) && _.isEmpty(value)));
+}
+
+//
+// Returns true if `value` is an integer number or string.
+//
+function isInteger(value) {
+  var parsed = parseFloat(value);
+  return !isNaN(value) && ((parsed | 0) === parsed);
 }
 
 //
@@ -122,7 +130,7 @@ var Ratify = {
           });
       });
       return settleAll(promises)
-        .catch(ValidationError, function(e) {
+        .catch(ValidationError, function() {
           return Promise.reject(new ValidationError(errors));
         });
     };
@@ -141,7 +149,7 @@ var Ratify = {
   //
   getModelValidator: function(attrRules) {
     var errors = {};
-    var attrValidators = _.mapObject(attrRules, function(rules, attrName) {
+    var attrValidators = _.mapObject(attrRules, function(rules) {
       return this.getAttributeValidator(rules);
     }.bind(this));
 
@@ -155,7 +163,7 @@ var Ratify = {
           });
       });
       return settleAll(promises)
-        .catch(ValidationError, function(e) {
+        .catch(ValidationError, function() {
           return Promise.reject(new ValidationError(errors));
         });
     };
@@ -356,7 +364,7 @@ var builtInValidators = {
         pass = value !== options.otherThan;
       }
       if(pass && options.onlyInteger) {
-        pass = !isNaN(value) && parseInt(Number(value), 10) == value && !isNaN(parseInt(value, 10));
+        pass = isInteger(value);
       }
       if(pass && options.even) {
         pass = (value % 2) === 0;

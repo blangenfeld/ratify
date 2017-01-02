@@ -1,6 +1,0 @@
-{
-  "mocha": true,
-  "globals": {
-    "require": false
-  }
-}

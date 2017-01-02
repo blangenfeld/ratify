@@ -601,7 +601,7 @@ describe('Ratify', function() {
       context("('password')", function() {
         it("proxies #confirmation with argument 'password'", function() {
           var confirmation = sinon.stub(Ratify.validators, 'confirmation').returns('foo');
-          result = Ratify.validators.equalTo('password');
+          var result = Ratify.validators.equalTo('password');
           sinon.restore(Ratify.validators, 'confirmation');
           expect(result).to.equal('foo');
           return expect(confirmation.calledWithExactly('password')).to.be.true;
@@ -613,7 +613,7 @@ describe('Ratify', function() {
       context('(42)', function() {
         it('proxies #numericality with options {lessThanOrEqualTo: 42}', function() {
           var numericality = sinon.stub(Ratify.validators, 'numericality').returns('foo');
-          result = Ratify.validators.max(42);
+          var result = Ratify.validators.max(42);
           sinon.restore(Ratify.validators, 'numericality');
           expect(result).to.equal('foo');
           return expect(numericality.calledWithExactly({lessThanOrEqualTo: 42})).to.be.true;

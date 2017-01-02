@@ -4,7 +4,12 @@
   "description": "Promise-based validation library",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_ENV=test mocha --require blanket --reporter mocha-lcov-reporter | ./node_modules/codeclimate-test-reporter/bin/codeclimate.js"
+    "test": "mocha -R spec test/test.js",
+    "lint": "./node_modules/.bin/eslint index.js test/test.js",
+    "coverage": "./node_modules/.bin/istanbul cover --dir ./reports _mocha -- -R spec test/test.js",
+    "codeclimate": "./node_modules/.bin/codeclimate-test-reporter < reports/lcov.info",
+    "clean": "rm -rf reports",
+    "ci": "npm run clean && npm run lint && npm run test && npm run coverage && npm run codeclimate"
   },
   "repository": {
     "type": "git",
@@ -24,12 +29,17 @@
     "node": ">=6.2.1"
   },
   "devDependencies": {
-    "blanket": "^1.2.3",
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
     "codeclimate-test-reporter": "^0.4.0",
     "dotenv": "^2.0.0",
+    "eslint": "^3.12.2",
+    "eslint-config-standard": "^6.2.1",
+    "eslint-plugin-promise": "^3.4.0",
+    "eslint-plugin-standard": "^2.0.1",
+    "istanbul": "^0.4.5",
     "mocha": "^3.2.0",
+    "mocha-istanbul": "^0.3.0",
     "mocha-lcov-reporter": "^1.2.0",
     "sinon": "^1.17.6"
   },
