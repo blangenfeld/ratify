@@ -40,36 +40,36 @@ describe('Underscore mixins', function() {
 
 describe('Ratify', function() {
   describe('single built-in validator', function() {
-    var validator = Ratify.getValidator('presence', true);
+    var validate = Ratify.getValidator('presence', true);
 
     it('is returned from #getValidator', function() {
-      return expect(validator).to.be.a('function');
+      return expect(validate).to.be.a('function');
     });
 
     it('resolves upon success', function() {
-      return expect(validator({a: 1}, 'a')).to.eventually.be.resolved;
+      return expect(validate({a: 1}, 'a')).to.eventually.be.resolved;
     });
 
     it('returns a promise rejecting with a descriptive ValidationError upon failure', function() {
-      return expect(validator({}, 'a')).to.eventually.be.rejectedWith(ValidationError)
+      return expect(validate({}, 'a')).to.eventually.be.rejectedWith(ValidationError)
         .and.to.include({message: 'failed validation: presence'})
         .and.have.property('errors').to.deep.equal({presence: true});
     });
   });
 
   describe('single inline validator', function() {
-    var validator = Ratify.getValidator('fortyTwo', fortyTwo);
+    var validate = Ratify.getValidator('fortyTwo', fortyTwo);
 
     it('is returned from #getValidator', function() {
-      return expect(validator).to.be.a('function');
+      return expect(validate).to.be.a('function');
     });
 
     it('resolves upon success', function() {
-      return expect(validator({a: 42}, 'a')).to.eventually.be.resolved;
+      return expect(validate({a: 42}, 'a')).to.eventually.be.resolved;
     });
 
     it('returns a promise rejecting with a descriptive ValidationError upon failure', function() {
-      return expect(validator({a: 'not 42'}, 'a')).to.eventually.be.rejectedWith(ValidationError)
+      return expect(validate({a: 'not 42'}, 'a')).to.eventually.be.rejectedWith(ValidationError)
         .and.to.include({message: 'failed validation: fortyTwo'})
         .and.have.property('errors').to.deep.equal({fortyTwo: true});
     });
@@ -81,18 +81,18 @@ describe('Ratify', function() {
       numericality: true,
       fortyTwo: fortyTwo // inline
     };
-    var validator = Ratify.getAttributeValidator(rules);
+    var validate = Ratify.getAttributeValidator('a', rules);
 
     it('is returned from #getAttributeValidator', function() {
-      return expect(validator).to.be.a('function');
+      return expect(validate).to.be.a('function');
     });
 
     it('resolves upon success', function() {
-      return expect(validator({a: 42}, 'a')).to.eventually.be.resolved;
+      return expect(validate({a: 42})).to.eventually.be.resolved;
     });
 
     it('returns a promise rejecting with a descriptive ValidationError upon failure', function() {
-      return expect(validator({}, 'a')).to.eventually.be.rejectedWith(ValidationError)
+      return expect(validate({})).to.eventually.be.rejectedWith(ValidationError)
         .and.to.include({message: 'attribute "a" failed validation: fortyTwo, numericality, presence'})
         .and.have.property('errors').to.deep.equal({presence: true, numericality: true, fortyTwo: true});
     });
@@ -105,18 +105,18 @@ describe('Ratify', function() {
       email: {format: /\w+@\w+/},
       answer: {fortyTwo: fortyTwo} // inline
     };
-    var validator = Ratify.getModelValidator(attrRules);
+    var validate = Ratify.getModelValidator(attrRules);
 
     it('is returned from #getModelValidator', function() {
-      return expect(validator).to.be.a('function');
+      return expect(validate).to.be.a('function');
     });
 
     it('resolves upon success', function() {
-      return expect(validator({username: 'foo', password: 'asdf123', email: 'foo@bar.com', answer:42})).to.eventually.be.resolved;
+      return expect(validate({username: 'foo', password: 'asdf123', email: 'foo@bar.com', answer:42})).to.eventually.be.resolved;
     });
 
     it('returns a promise rejecting with a descriptive ValidationError upon failure', function() {
-      return expect(validator({username: 'foo', password: 'hi', email: 'blah', answer: 123})).to.eventually.be.rejectedWith(ValidationError)
+      return expect(validate({username: 'foo', password: 'hi', email: 'blah', answer: 123})).to.eventually.be.rejectedWith(ValidationError)
         .and.to.include({message: 'model failed validation: answer, email, password'})
         .and.have.property('errors').to.deep.equal({password: {minLength: true}, email: {format: true}, answer: {fortyTwo: true}});
     });

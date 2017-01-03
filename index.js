@@ -126,8 +126,8 @@ var Ratify = {
   },
 
   //
-  // Returns a function that takes (attrs, attrName), runs *all* validators specified in `rules`,
-  // and returns a promise.
+  // Returns a function that takes (attrs, valNames), runs matching validators specified in
+  // `rules`, and returns a promise.
   //
   // The returned promise rejects with a ValidationError if *any* of the validators fails. Check
   // the ValidationError's .errors property to discover which of the individual validators failed.
@@ -137,17 +137,24 @@ var Ratify = {
   // combining attribute validators, we can validate entire objects (see #getModelValidator).
   //
   // Parameters:
+  // - attrName (string): The name of the attribute the returned function should validate.
   // - rules (object): Validators named as keys are configured with options passed as values; e.g.
   //   {acceptance: true, numericality: {onlyInteger: true}}
   //
-  getAttributeValidator: function(rules) {
+  // Returned function parameters:
+  // - attrs (object): The object whose attribute should be validated.
+  // - valNames (array[string]): Names of individual validators to be run. (Default: all.)
+  //
+  getAttributeValidator: function(attrName, rules) {
     var errors = {};
-    var validators = _.map(rules, function(options, valName) {
+    var validators = _.mapObject(rules, function(options, valName) {
       return this.getValidator(valName, options);
     }.bind(this));
 
-    return function validateAttribute(attrs, attrName) {
-      var promises = _.map(validators, function(validator) {
+    return function validateAttribute(attrs) {
+      var valNames = _.toArray(arguments).slice(1);
+      var validatorsToRun = _.pick(validators, !isEmpty(valNames) ? valNames : _.keys(rules));
+      var promises = _.map(validatorsToRun, function(validator, valName) {
         return validator(attrs, attrName)
           .catch(isValidationError, function(e) {
             _.extend(errors, e.errors);
@@ -170,19 +177,24 @@ var Ratify = {
   // the ValidationError's .errors property to discover which of the individual validators failed.
   //
   // Parameters:
-  // - rules (object): Validators named as keys are configured with options passed as values; e.g.
+  // - attrRules (object): Validators named as keys are configured with options passed as values; e.g.
   //   {acceptance: true, numericality: {onlyInteger: true}}
+  //
+  // Returned function parameters:
+  // - attrs (object): The object to be validated.
+  // - attrNames (array[string]): Names of individual attributes to validate. (Default: all.)
   //
   getModelValidator: function(attrRules) {
     var errors = {};
-    var attrValidators = _.mapObject(attrRules, function(rules) {
-      return this.getAttributeValidator(rules);
+    var attrValidators = _.mapObject(attrRules, function(rules, attrName) {
+      return this.getAttributeValidator(attrName, rules);
     }.bind(this));
 
-    return function validateModel(attrs, attrNames) {
-      var attrValidatorsToRun = _.pick(attrValidators, attrNames || _.keys(attrRules));
+    return function validateModel(attrs) {
+      var attrNames = _.toArray(arguments).slice(1);
+      var attrValidatorsToRun = _.pick(attrValidators, !isEmpty(attrNames) ? attrNames : _.keys(attrRules));
       var promises = _.map(attrValidatorsToRun, function(validators, attrName) {
-        return validators(attrs, attrName)
+        return validators(attrs)
           .catch(isValidationError, function(e) {
             errors[attrName] = e.errors;
             throw e;
